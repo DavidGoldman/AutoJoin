@@ -11,4 +11,4 @@ waits the specified delay and tries again.
 If an error occurs, Auto Join will wait the specified delay until trying again (otherwise, you can
 get into some nasty exception loops).
 
-Forum Thread: http://www.minecraftforum.net/topic/1909304-/
+Forum Thread: http://www.minecraftforum.net/topic/1922957-/
