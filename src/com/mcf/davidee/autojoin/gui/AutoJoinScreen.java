@@ -132,7 +132,7 @@ public class AutoJoinScreen extends BasicScreen {
 		title = new Label("Auto-Joining Server \"" + server.ip + "\"");
 		status = new Label("");
 		info = new Label("");
-		close = new ButtonVanilla(I18n.func_135053_a("gui.done"), new CloseHandler());
+		close = new ButtonVanilla(I18n.getString("gui.done"), new CloseHandler());
 
 		container = new Container();
 		container.addWidgets(title, status, info, close);

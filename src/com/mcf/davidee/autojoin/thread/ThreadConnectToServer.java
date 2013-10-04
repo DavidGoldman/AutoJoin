@@ -26,12 +26,11 @@ public class ThreadConnectToServer extends Thread {
 			if (screen.isCancelled())
 				return;
 			screen.getNetClientHandler().addToSendQueue(new Packet2ClientProtocol(AutoJoin.PROTOCOL_VER,
-					mc.func_110432_I().func_111285_a(), info.ip, info.port));
+					mc.getSession().getUsername(), info.ip, info.port));
 		}
 		catch(Exception e) {
-			if (screen.isCancelled())
-				return;
-			screen.connectError(e.getMessage());
+			if (!screen.isCancelled())
+				screen.connectError(e.getMessage());
 		}
 	}
 }

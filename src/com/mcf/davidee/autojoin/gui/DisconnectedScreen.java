@@ -43,14 +43,14 @@ public class DisconnectedScreen extends GuiScreen {
 
 	public void initGui() {
 		this.buttonList.clear();
-		this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 132, I18n.func_135053_a("gui.toMenu")));
+		this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 132, I18n.getString("gui.toMenu")));
 		this.buttonList.add(new GuiButton(1, width /2 - 100, height/ 4 + 80, "Auto Join"));
 		this.buttonList.add(new GuiButton(2, width / 2 - 100, height / 4 + 106, "Auto Join Properties"));
 
 		if (this.field_74247_c != null)
-			this.list = this.fontRenderer.listFormattedStringToWidth(I18n.func_135052_a(this.errorDetail, this.field_74247_c), this.width - 50);
+			this.list = this.fontRenderer.listFormattedStringToWidth(I18n.getStringParams(this.errorDetail, this.field_74247_c), this.width - 50);
 		else
-			this.list = this.fontRenderer.listFormattedStringToWidth(I18n.func_135053_a(this.errorDetail), this.width - 50);
+			this.list = this.fontRenderer.listFormattedStringToWidth(I18n.getString(this.errorDetail), this.width - 50);
 	}
 
 	protected void actionPerformed(GuiButton button) {
