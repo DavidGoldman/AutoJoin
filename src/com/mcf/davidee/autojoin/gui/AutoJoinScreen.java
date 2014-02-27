@@ -1,8 +1,9 @@
 package com.mcf.davidee.autojoin.gui;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.multiplayer.NetClientHandler;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.util.ChatComponentText;
 
 import com.mcf.davidee.autojoin.AutoJoin;
 import com.mcf.davidee.autojoin.ServerInfo;
@@ -32,9 +33,8 @@ public class AutoJoinScreen extends BasicScreen {
 	private Label title, status, info;
 	private Button close;
 
-	//Synchronize? Don't think it's needed...
-	private NetClientHandler handler;
-	private State state;
+	private volatile NetworkManager manager;
+	private volatile State state;
 
 	private long startTime;
 	private long curTime;
@@ -79,8 +79,13 @@ public class AutoJoinScreen extends BasicScreen {
 	@Override
 	public void updateScreen() {
 		super.updateScreen();
-		if (handler != null)
-			handler.processReadPackets();
+		if (manager != null) {
+			if (manager.isChannelOpen())
+				manager.processReceivedPackets();
+			else if (manager.getExitMessage() != null)
+				manager.getNetHandler().onDisconnect(manager.getExitMessage());
+		}
+		
 		curTime = System.currentTimeMillis();
 		switch(state) {
 		case PING_WAIT:
@@ -99,8 +104,8 @@ public class AutoJoinScreen extends BasicScreen {
 	@Override
 	public void close() {
 		this.cancelled = true;
-		if (handler != null)
-			handler.disconnect();
+		if (manager != null)
+			manager.closeChannel(new ChatComponentText("Aborted"));
 		AutoJoin.instance.resetCache();
 		super.close();
 	}
@@ -115,12 +120,12 @@ public class AutoJoinScreen extends BasicScreen {
 		container.revalidate(0, 0, width, height);
 	}
 
-	public void setNetClientHandler(NetClientHandler handler) {
-		this.handler = handler;
+	public void setManager(NetworkManager manager) {
+		this.manager = manager;
 	}
 	
-	public NetClientHandler getNetClientHandler() {
-		return handler;
+	public NetworkManager getManager() {
+		return manager;
 	}
 	
 	public boolean isCancelled() {
@@ -132,7 +137,7 @@ public class AutoJoinScreen extends BasicScreen {
 		title = new Label("Auto-Joining Server \"" + server.ip + "\"");
 		status = new Label("");
 		info = new Label("");
-		close = new ButtonVanilla(I18n.getString("gui.done"), new CloseHandler());
+		close = new ButtonVanilla(I18n.format("gui.done"), new CloseHandler());
 
 		container = new Container();
 		container.addWidgets(title, status, info, close);

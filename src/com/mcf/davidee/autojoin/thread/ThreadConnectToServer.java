@@ -1,10 +1,15 @@
 package com.mcf.davidee.autojoin.thread;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.NetClientHandler;
-import net.minecraft.network.packet.Packet2ClientProtocol;
+import java.net.InetAddress;
 
-import com.mcf.davidee.autojoin.AutoJoin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.network.NetHandlerLoginClient;
+import net.minecraft.network.EnumConnectionState;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.handshake.client.C00Handshake;
+import net.minecraft.network.login.client.C00PacketLoginStart;
+
 import com.mcf.davidee.autojoin.ServerInfo;
 import com.mcf.davidee.autojoin.gui.AutoJoinScreen;
 
@@ -22,11 +27,14 @@ public class ThreadConnectToServer extends Thread {
 	
 	public void run() {
 		try {
-			screen.setNetClientHandler(new NetClientHandler(mc, info.ip, info.port));
 			if (screen.isCancelled())
 				return;
-			screen.getNetClientHandler().addToSendQueue(new Packet2ClientProtocol(AutoJoin.PROTOCOL_VER,
-					mc.getSession().getUsername(), info.ip, info.port));
+			NetworkManager manager = NetworkManager.provideLanClient(InetAddress.getByName(info.ip), info.port);
+			//TODO change this back to the AJ screen?
+			manager.setNetHandler(new NetHandlerLoginClient(manager, mc, new GuiMainMenu()));
+			manager.scheduleOutboundPacket(new C00Handshake(4, info.ip, info.port, EnumConnectionState.LOGIN));
+            manager.scheduleOutboundPacket(new C00PacketLoginStart(mc.getSession().func_148256_e()));
+            screen.setManager(manager);
 		}
 		catch(Exception e) {
 			if (!screen.isCancelled())

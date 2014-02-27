@@ -1,30 +1,33 @@
 package com.mcf.davidee.autojoin;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 
-import net.minecraft.client.multiplayer.ServerAddress;
-import net.minecraftforge.common.Configuration;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiDisconnected;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.common.config.Configuration;
 
-import com.mcf.davidee.autojoin.forge.ConnectionHandler;
-import com.mcf.davidee.autojoin.forge.GuiListener;
 import com.mcf.davidee.autojoin.gui.AutoJoinScreen;
+import com.mcf.davidee.autojoin.gui.DisconnectedScreen;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.ModMetadata;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.network.NetworkMod;
-import cpw.mods.fml.common.registry.TickRegistry;
-import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
+import cpw.mods.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
 
 @Mod(modid="AutoJoin", name="Auto Join", version=AutoJoin.VERSION, dependencies="after:guilib")
-@NetworkMod(connectionHandler = ConnectionHandler.class)
 public class AutoJoin {
 	
 	public static final int PROTOCOL_VER = 78;
-	public static final String VERSION = "1.6.4.0";
+	public static final String VERSION = "1.7.2.0";
 	
 	@Instance("AutoJoin")
 	public static AutoJoin instance;
@@ -32,6 +35,8 @@ public class AutoJoin {
 	private AJConfig config;
 	public ServerInfo lastServer;
 	public AutoJoinScreen screen;
+	
+	private GuiScreen cache = null;
 	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
@@ -47,7 +52,37 @@ public class AutoJoin {
 	
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
-		TickRegistry.registerScheduledTickHandler(new GuiListener(), Side.CLIENT);
+		FMLCommonHandler.instance().bus().register(this);
+	}
+	
+	@SubscribeEvent
+	public void clientTick(ClientTickEvent event) {
+		Minecraft mc = Minecraft.getMinecraft();
+		
+		if (mc.currentScreen instanceof GuiDisconnected && mc.currentScreen != cache) {
+			System.out.println(mc.currentScreen);
+			cache = mc.currentScreen;
+			ServerInfo info = lastServer;
+			System.out.println(info);
+			DisconnectedScreen dc = new DisconnectedScreen(info, (GuiDisconnected)mc.currentScreen);
+			
+			if (screen != null) {
+				screen.connectError(dc.errorMessage);
+				mc.displayGuiScreen(screen);
+			}
+			else if (info != null)
+				mc.displayGuiScreen(dc);
+		}
+		if (mc.currentScreen instanceof GuiMainMenu)
+			resetCache();
+	}
+	
+	@SubscribeEvent
+	public void connectedToServer(ClientConnectedToServerEvent event) {
+		if (event.isLocal)
+			resetCache();
+		else
+			lastServer = ServerInfo.from((InetSocketAddress) event.manager.getSocketAddress());
 	}
 	
 	public AJConfig getConfig() {

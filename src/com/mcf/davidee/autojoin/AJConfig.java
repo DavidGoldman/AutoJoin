@@ -1,7 +1,7 @@
 package com.mcf.davidee.autojoin;
 
-import net.minecraftforge.common.Configuration;
-import net.minecraftforge.common.Property;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 
 public class AJConfig {
 	
@@ -26,9 +26,9 @@ public class AJConfig {
 	
 	public ServerSetting loadSetting(String ip) {
 		ip = ip.replace('.', '_');
-		Property ping = config.get(ip, "pingDelay", 1.0D);
-		Property error = config.get(ip, "errorDelay", 4.0D);
-		Property offset = config.get(ip, "joinOffset", 0);
+		Property ping = config.get(ip, "pingDelay", _default.pingDelay);
+		Property error = config.get(ip, "errorDelay", _default.errorDelay);
+		Property offset = config.get(ip, "joinOffset", _default.joinOffset);
 		ServerSetting s = new ServerSetting(ping, error, offset);
 		s.save(ping, error, offset);
 		config.save();
@@ -37,9 +37,9 @@ public class AJConfig {
 	
 	public void saveSetting(String ip, ServerSetting s) {
 		ip = ip.replace('.', '_');
-		Property ping = config.get(ip, "pingDelay", 1.0D);
-		Property error = config.get(ip, "errorDelay", 4.0D);
-		Property offset = config.get(ip, "joinOffset", 0);
+		Property ping = config.get(ip, "pingDelay", _default.pingDelay);
+		Property error = config.get(ip, "errorDelay", _default.errorDelay);
+		Property offset = config.get(ip, "joinOffset", _default.joinOffset);
 		s.save(ping, error, offset);
 		config.save();
 	}

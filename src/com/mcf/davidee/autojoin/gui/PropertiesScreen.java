@@ -5,8 +5,6 @@ import java.util.Arrays;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.MathHelper;
 
-import org.lwjgl.input.Keyboard;
-
 import com.mcf.davidee.autojoin.AutoJoin;
 import com.mcf.davidee.autojoin.ServerSetting;
 import com.mcf.davidee.guilib.basic.BasicScreen;

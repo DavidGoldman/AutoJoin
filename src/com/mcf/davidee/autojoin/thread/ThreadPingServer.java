@@ -1,17 +1,18 @@
 package com.mcf.davidee.autojoin.thread;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.Packet254ServerPing;
-import net.minecraft.util.ChatAllowedCharacters;
-import net.minecraft.util.MathHelper;
+import net.minecraft.network.EnumConnectionState;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.ServerStatusResponse;
+import net.minecraft.network.handshake.client.C00Handshake;
+import net.minecraft.network.status.INetHandlerStatusClient;
+import net.minecraft.network.status.client.C00PacketServerQuery;
+import net.minecraft.network.status.server.S00PacketServerInfo;
+import net.minecraft.network.status.server.S01PacketPong;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.IChatComponent;
 
 import com.mcf.davidee.autojoin.AutoJoin;
 import com.mcf.davidee.autojoin.ServerInfo;
@@ -27,10 +28,78 @@ public class ThreadPingServer extends Thread {
 		this.info = info;
 	}
 
+	public void newRun() throws UnknownHostException {
+		final NetworkManager manager = NetworkManager.provideLanClient(InetAddress.getByName(info.ip), info.port);
+		manager.setNetHandler(new INetHandlerStatusClient() {
+
+			@Override
+			public void handleServerInfo(S00PacketServerInfo packet) {
+				ServerStatusResponse response = packet.func_149294_c();
+				
+				String version = "???";
+				int protocol = 0;
+				int curPlayers = -1, maxPlayers = -1;
+				if (response.func_151322_c() != null) {
+					protocol = response.func_151322_c().func_151304_b();
+					version = response.func_151322_c().func_151303_a();
+				}
+				if (response.func_151318_b() != null) {
+					curPlayers = response.func_151318_b().func_151333_b();
+					maxPlayers = response.func_151318_b().func_151332_a();
+				}
+				
+				if (protocol != AutoJoin.PROTOCOL_VER)
+					screen.versionErrror("Version mismatch (" + version + ")");
+				else if (curPlayers != -1 && maxPlayers != -1)
+					screen.pingSuccess(curPlayers, maxPlayers);
+				else
+					screen.versionErrror("No population data sent! =/");
+			}
+
+			@Override
+			public void handlePong(S01PacketPong packet) {
+				manager.closeChannel(new ChatComponentText("Finished"));
+			}
+
+			@Override
+			public void onDisconnect(IChatComponent p_147231_1_) { }
+
+			@Override
+			public void onConnectionStateTransition(EnumConnectionState p_147232_1_, EnumConnectionState p_147232_2_) {
+				if (p_147232_2_ != EnumConnectionState.STATUS)
+					throw new UnsupportedOperationException("Unexpected change in protocol to " + p_147232_2_);
+			}
+
+			@Override
+			public void onNetworkTick() { }
+		});
+
+		try {
+			manager.scheduleOutboundPacket(new C00Handshake(4, info.ip, info.port, EnumConnectionState.STATUS));
+			manager.scheduleOutboundPacket(new C00PacketServerQuery());
+		}
+		catch (Throwable throwable) {
+			screen.connectError("Packet error: " + throwable.getMessage());
+		}
+	}
+	
+	public void run() {
+		try {
+			newRun();
+		}
+		catch(UnknownHostException e) {
+			screen.connectError("Host error: " + e);
+		}
+		catch(Exception e) {
+			screen.connectError("Error: " + e);
+		}
+	}
+
 	/**
 	 * Ping the server (well attempt to)!
 	 */
-	public void run() {
+	/*
+	public void oldrun() {
 		Socket socket = null;
 		DataInputStream in = null;
 		DataOutputStream out = null;
@@ -65,7 +134,7 @@ public class ThreadPingServer extends Thread {
 
 			if (str.startsWith("\u00a7") && str.length() > 1) {
 				data = str.substring(1).split("\u0000");
-				
+
 				if (MathHelper.parseIntWithDefault(data[0], 0) == 1) {
 					curPlayers = Integer.parseInt(data[4]);
 					maxPlayers = Integer.parseInt(data[5]);
@@ -95,5 +164,5 @@ public class ThreadPingServer extends Thread {
 			}
 		}
 	}
-
+	*/
 }

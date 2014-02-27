@@ -1,6 +1,6 @@
 package com.mcf.davidee.autojoin;
 
-import net.minecraftforge.common.Property;
+import net.minecraftforge.common.config.Property;
 
 public class ServerSetting {
 	public double pingDelay;
