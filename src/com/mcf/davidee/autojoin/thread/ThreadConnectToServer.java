@@ -4,12 +4,13 @@ import java.net.InetAddress;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
-import net.minecraft.client.network.NetHandlerLoginClient;
 import net.minecraft.network.EnumConnectionState;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.client.C00PacketLoginStart;
 
+import com.mcf.davidee.autojoin.AJLoginHandler;
+import com.mcf.davidee.autojoin.AutoJoin;
 import com.mcf.davidee.autojoin.ServerInfo;
 import com.mcf.davidee.autojoin.gui.AutoJoinScreen;
 
@@ -31,8 +32,8 @@ public class ThreadConnectToServer extends Thread {
 				return;
 			NetworkManager manager = NetworkManager.provideLanClient(InetAddress.getByName(info.ip), info.port);
 			//TODO change this back to the AJ screen?
-			manager.setNetHandler(new NetHandlerLoginClient(manager, mc, new GuiMainMenu()));
-			manager.scheduleOutboundPacket(new C00Handshake(4, info.ip, info.port, EnumConnectionState.LOGIN));
+			manager.setNetHandler(new AJLoginHandler(manager, mc, new GuiMainMenu()));
+			manager.scheduleOutboundPacket(new C00Handshake(AutoJoin.PROTOCOL_VER, info.ip, info.port, EnumConnectionState.LOGIN));
             manager.scheduleOutboundPacket(new C00PacketLoginStart(mc.getSession().func_148256_e()));
             screen.setManager(manager);
 		}

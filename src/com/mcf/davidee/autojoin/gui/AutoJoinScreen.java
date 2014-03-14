@@ -79,14 +79,17 @@ public class AutoJoinScreen extends BasicScreen {
 	@Override
 	public void updateScreen() {
 		super.updateScreen();
+		
 		if (manager != null) {
 			if (manager.isChannelOpen())
 				manager.processReceivedPackets();
-			else if (manager.getExitMessage() != null)
+			else if (manager.getExitMessage() != null) {
 				manager.getNetHandler().onDisconnect(manager.getExitMessage());
+				manager = null;
+			}
 		}
-		
 		curTime = System.currentTimeMillis();
+		
 		switch(state) {
 		case PING_WAIT:
 			if ((curTime - startTime) / 1000.0D >= setting.pingDelay)
@@ -104,8 +107,10 @@ public class AutoJoinScreen extends BasicScreen {
 	@Override
 	public void close() {
 		this.cancelled = true;
-		if (manager != null)
+		if (manager != null) {
 			manager.closeChannel(new ChatComponentText("Aborted"));
+			manager = null;
+		}
 		AutoJoin.instance.resetCache();
 		super.close();
 	}

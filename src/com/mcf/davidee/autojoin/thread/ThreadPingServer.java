@@ -32,6 +32,8 @@ public class ThreadPingServer extends Thread {
 		final NetworkManager manager = NetworkManager.provideLanClient(InetAddress.getByName(info.ip), info.port);
 		manager.setNetHandler(new INetHandlerStatusClient() {
 
+			private boolean received = false;
+			
 			@Override
 			public void handleServerInfo(S00PacketServerInfo packet) {
 				ServerStatusResponse response = packet.func_149294_c();
@@ -54,6 +56,8 @@ public class ThreadPingServer extends Thread {
 					screen.pingSuccess(curPlayers, maxPlayers);
 				else
 					screen.versionErrror("No population data sent! =/");
+				
+				received = true;
 			}
 
 			@Override
@@ -62,7 +66,10 @@ public class ThreadPingServer extends Thread {
 			}
 
 			@Override
-			public void onDisconnect(IChatComponent p_147231_1_) { }
+			public void onDisconnect(IChatComponent p_147231_1_) {
+				if (!received)
+					screen.pingFail(p_147231_1_.getFormattedText());
+			}
 
 			@Override
 			public void onConnectionStateTransition(EnumConnectionState p_147232_1_, EnumConnectionState p_147232_2_) {
@@ -75,8 +82,9 @@ public class ThreadPingServer extends Thread {
 		});
 
 		try {
-			manager.scheduleOutboundPacket(new C00Handshake(4, info.ip, info.port, EnumConnectionState.STATUS));
+			manager.scheduleOutboundPacket(new C00Handshake(AutoJoin.PROTOCOL_VER, info.ip, info.port, EnumConnectionState.STATUS));
 			manager.scheduleOutboundPacket(new C00PacketServerQuery());
+			screen.setManager(manager);
 		}
 		catch (Throwable throwable) {
 			screen.connectError("Packet error: " + throwable.getMessage());
@@ -95,74 +103,4 @@ public class ThreadPingServer extends Thread {
 		}
 	}
 
-	/**
-	 * Ping the server (well attempt to)!
-	 */
-	/*
-	public void oldrun() {
-		Socket socket = null;
-		DataInputStream in = null;
-		DataOutputStream out = null;
-		try {
-			socket = new Socket();
-			socket.setSoTimeout(3000);
-			socket.setTcpNoDelay(true);
-			socket.setTrafficClass(18);
-			socket.connect(new InetSocketAddress(info.ip, info.port), 3000);
-
-			in = new DataInputStream(socket.getInputStream());
-			out = new DataOutputStream(socket.getOutputStream());
-			Packet254ServerPing pkt = new Packet254ServerPing(AutoJoin.PROTOCOL_VER, info.ip, info.port);
-			out.writeByte(pkt.getPacketId());
-			pkt.writePacketData(out);
-
-			if (in.read() != 255) {
-				screen.pingFail("Invalid response from server");
-				return;
-			}
-			String str = Packet.readString(in, 256);
-			char[] arr = str.toCharArray();
-
-			for (int i = 0; i < arr.length; ++i)
-				if (arr[i] != 167 && arr[i] != 0 && ChatAllowedCharacters.allowedCharacters.indexOf(arr[i]) < 0)
-					arr[i] = 63;
-			str = new String(arr);
-
-			String[] data = null;
-			int curPlayers = -1;
-			int maxPlayers = -1;
-
-			if (str.startsWith("\u00a7") && str.length() > 1) {
-				data = str.substring(1).split("\u0000");
-
-				if (MathHelper.parseIntWithDefault(data[0], 0) == 1) {
-					curPlayers = Integer.parseInt(data[4]);
-					maxPlayers = Integer.parseInt(data[5]);
-					int internalVersion = MathHelper.parseIntWithDefault(data[1], AutoJoin.PROTOCOL_VER);
-					String gameVersion = data[2];
-					if (internalVersion == AutoJoin.PROTOCOL_VER)
-						screen.pingSuccess(curPlayers, maxPlayers);
-					else
-						screen.versionErrror("Outdated Server (" + gameVersion + ")");
-				}
-				else 
-					screen.versionErrror("Outdated Server (???)");
-			}
-			else 
-				screen.versionErrror("Outdated Server (1.3)");
-
-		}
-		catch (SocketException e) {
-			screen.pingFail("Socket error: " + e.getMessage());
-		} catch (Exception e) {
-			screen.pingFail("Ping failed: " + e.getMessage());
-		} 
-		finally {
-			if (socket != null) {
-				try { socket.close(); }
-				catch(IOException e) { }
-			}
-		}
-	}
-	*/
 }

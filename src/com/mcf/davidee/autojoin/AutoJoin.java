@@ -7,9 +7,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiDisconnected;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.multiplayer.GuiConnecting;
 import net.minecraftforge.common.config.Configuration;
 
-import com.mcf.davidee.autojoin.gui.AutoJoinScreen;
 import com.mcf.davidee.autojoin.gui.DisconnectedScreen;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -26,7 +26,7 @@ import cpw.mods.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
 @Mod(modid="AutoJoin", name="Auto Join", version=AutoJoin.VERSION, dependencies="after:guilib")
 public class AutoJoin {
 	
-	public static final int PROTOCOL_VER = 78;
+	public static final int PROTOCOL_VER = 4;
 	public static final String VERSION = "1.7.2.0";
 	
 	@Instance("AutoJoin")
@@ -34,9 +34,8 @@ public class AutoJoin {
 	
 	private AJConfig config;
 	public ServerInfo lastServer;
-	public AutoJoinScreen screen;
 	
-	private GuiScreen cache = null;
+	private GuiScreen guiCache = null;
 	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
@@ -59,22 +58,16 @@ public class AutoJoin {
 	public void clientTick(ClientTickEvent event) {
 		Minecraft mc = Minecraft.getMinecraft();
 		
-		if (mc.currentScreen instanceof GuiDisconnected && mc.currentScreen != cache) {
-			System.out.println(mc.currentScreen);
-			cache = mc.currentScreen;
-			ServerInfo info = lastServer;
-			System.out.println(info);
-			DisconnectedScreen dc = new DisconnectedScreen(info, (GuiDisconnected)mc.currentScreen);
+		if (mc.currentScreen != guiCache) {
+			guiCache = mc.currentScreen;
 			
-			if (screen != null) {
-				screen.connectError(dc.errorMessage);
-				mc.displayGuiScreen(screen);
-			}
-			else if (info != null)
-				mc.displayGuiScreen(dc);
+			if (guiCache instanceof GuiDisconnected && lastServer != null) 
+				mc.displayGuiScreen(new DisconnectedScreen(lastServer, (GuiDisconnected)guiCache));
+			if (guiCache instanceof GuiConnecting && mc.func_147104_D() != null) /*getServerData*/
+				lastServer = ServerInfo.from(mc.func_147104_D());
+			if (guiCache instanceof GuiMainMenu)
+				resetCache();
 		}
-		if (mc.currentScreen instanceof GuiMainMenu)
-			resetCache();
 	}
 	
 	@SubscribeEvent
@@ -91,6 +84,5 @@ public class AutoJoin {
 	
 	public void resetCache() {
 		lastServer = null;
-		screen = null;
 	}
 }

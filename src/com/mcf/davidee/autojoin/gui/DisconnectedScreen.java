@@ -57,13 +57,11 @@ public class DisconnectedScreen extends GuiScreen {
 
 	protected void actionPerformed(GuiButton button) {
 		if (button.id == 0) {
-			this.mc.displayGuiScreen(parent);
+			mc.displayGuiScreen(parent);
 			AutoJoin.instance.resetCache();
 		}
-		if (button.id == 1) {
-			AutoJoin.instance.screen = new AutoJoinScreen(parent, info);
-			mc.displayGuiScreen(AutoJoin.instance.screen);
-		}
+		if (button.id == 1)
+			mc.displayGuiScreen(new AutoJoinScreen(parent, info));
 		if (button.id == 2)
 			mc.displayGuiScreen(new PropertiesScreen(this, info.ip));
 	}
